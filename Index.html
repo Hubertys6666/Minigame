@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Koci Łapaniec - Minigierka z Rudymi Kotami</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="10" fill="%23ff6b35" stroke="%23fff" stroke-width="2"/></svg>') 16 16, auto;
+        }
+
+        body {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            background: linear-gradient(135deg, #ff9a56 0%, #ff6b35 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Tło z łapami */
+        body::before {
+            content: '🐾 🐾 🐾 🐾 🐾 🐾 🐾 🐾 🐾 🐾 🐾 🐾 🐾 🐾 🐾 🐾 🐾 🐾 🐾 🐾 🐾 🐾 🐾 🐾';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-15deg);
+            font-size: 3em;
+            opacity: 0.1;
+            white-space: nowrap;
+            animation: float 20s linear infinite;
+        }
+
+        @keyframes float {
+            0% { transform: translate(-50%, -50%) rotate(-15deg) translateX(-100%); }
+            100% { transform: translate(-50%, -50%) rotate(-15deg) translateX(100%); }
+        }
+
+        .game-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 30px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            max-width: 800px;
+            width: 90%;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        h1 {
+            color: #ff6b35;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .subtitle {
+            color: #ff8c42;
+            margin-bottom: 20px;
+            font-size: 1.2em;
+        }
+
+        .game-stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .stat-box {
+            background: #fff3e0;
+            border: 3px solid #ff8c42;
+            border-radius: 15px;
+            padding: 15px 25px;
+            margin: 5px;
+            min-width: 150px;
+        }
+
+        .stat-label {
+            color: #ff6b35;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            color: #ff6b35;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin: 30px auto;
+            max-width: 600px;
+        }
+
+        .hole {
+            width: 120px;
+            height: 120px;
+            background: radial-gradient(ellipse at center, #8b4513 0%, #654321 100%);
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 10px 20px rgba(0, 0, 0, 0.5);
+            border: 5px solid #654321;
+        }
+
+        .cat {
+            position: absolute;
+            bottom: -100%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 80px;
+            transition: bottom 0.3s ease-in-out;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .cat.show {
+            bottom: 20%;
+        }
+
+        .cat.hit {
+            animation: catHit 0.5s ease-out;
+        }
+
+        @keyframes catHit {
+            0% { transform: translateX(-50%) scale(1) rotate(0deg); }
+            50% { transform: translateX(-50%) scale(1.2) rotate(10deg); }
+            100% { transform: translateX(-50%) scale(0) rotate(360deg); opacity: 0; }
+        }
+
+        /* Różne typy kotów */
+        .cat-normal {
+            font-size: 60px;
+        }
+
+        .cat-fast {
+            font-size: 50px;
+            filter: hue-rotate(30deg);
+        }
+
+        .cat-golden {
+            font-size: 65px;
+            filter: drop-shadow(0 0 10px gold);
+            animation: sparkle 1s infinite;
+        }
+
+        @keyframes sparkle {
+            0%, 100% { filter: drop-shadow(0 0 10px gold); }
+            50% { filter: drop-shadow(0 0 20px gold) brightness(1.2); }
+        }
+
+        .controls {
+            margin-top: 20px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #ff6b35 0%, #ff8c42 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2em;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 0 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 5px 15px rgba(255, 107, 53, 0.3);
+        }
+
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(255, 107, 53, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .message {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 15px;
+            font-size: 1.1em;
+            font-weight: bold;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fff3e0;
+            color: #ff6b35;
+            border: 3px solid #ff8c42;
+        }
+
+        .high-scores {
+            margin-top: 20px;
+            background: #fff3e0;
+            border-radius: 15px;
+            padding: 20px;
+            border: 3px solid #ff8c42;
+        }
+
+        .high-scores h3 {
+            color: #ff6b35;
+            margin-bottom: 10px;
+        }
+
+        .score-list {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+        }
+
+        .score-item {
+            background: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            margin: 5px;
+            border: 2px solid #ff8c42;
+        }
+
+        .difficulty-selector {
+            margin-bottom: 20px;
+        }
+
+        .difficulty-btn {
+            background: #fff3e0;
+            color: #ff6b35;
+            border: 3px solid #ff8c42;
+            padding: 10px 20px;
+            margin: 0 5px;
+            font-size: 1em;
+        }
+
+        .difficulty-btn.active {
+            background: #ff6b35;
+            color: white;
+        }
+
+        .combo-indicator {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3em;
+            font-weight: bold;
+            color: #ff6b35;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            pointer-events: none;
+            opacity: 0;
+            z-index: 1000;
+        }
+
+        .combo-indicator.show {
+            animation: comboPopup 1s ease-out;
+        }
+
+        @keyframes comboPopup {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+            50% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+        }
+
+        .particle {
+            position: fixed;
+            pointer-events: none;
+            opacity: 0;
+            z-index: 999;
+        }
+
+        .particle.show {
+            animation: particleFloat 1s ease-out;
+        }
+
+        @keyframes particleFloat {
+            0% { 
+                opacity: 1; 
+                transform: translate(0, 0) scale(1); 
+            }
+            100% { 
+                opacity: 0; 
+                transform: translate(var(--x), var(--y)) scale(0.5); 
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>🐱 Koci Łapaniec 🐱</h1>
+        <p class="subtitle">Łap wszystkie rude koty zanim uciekną!</p>
+
+        <div class="difficulty-selector">
+            <button class="difficulty-btn active" onclick="setDifficulty('easy')">Łatwy</button>
+            <button class="difficulty-btn" onclick="setDifficulty('medium')">Średni</button>
+            <button class="difficulty-btn" onclick="setDifficulty('hard')">Trudny</button>
+        </div>
+
+        <div class="game-stats">
+            <div class="stat-box">
+                <div class="stat-label">Punkty</div>
+                <div class="stat-value" id="score">0</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Czas</div>
+                <div class="stat-value" id="time">120</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Kombo</div>
+                <div class="stat-value" id="combo">0</div>
+            </div>
+        </div>
+
+        <div class="game-board" id="gameBoard">
+            <!-- Dziury z kotami będą generowane dynamicznie -->
+        </div>
+
+        <div class="controls">
+            <button onclick="startGame()" id="startBtn">Start Gry</button>
+            <button onclick="resetGame()">Reset</button>
+        </div>
+
+        <div class="message" id="message">
+            Wybierz poziom trudności i kliknij Start Gry!
+        </div>
+
+        <div class="high-scores">
+            <h3>🏆 Najlepsze wyniki</h3>
+            <div class="score-list" id="highScores">
+                <div class="score-item">Brak wyników</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="combo-indicator" id="comboIndicator"></div>
+
+    <script>
+        let score = 0;
+        let timeLeft = 30;
+        let gameActive = false;
+        let difficulty = 'easy';
+        let combo = 0;
+        let gameTimer;
+        let catTimer;
+        let highScores = JSON.parse(localStorage.getItem('catGameHighScores')) || [];
+
+        const difficulties = {
+            easy: { speed: 1500, catDuration: 2000, goldenChance: 0.1 },
+            medium: { speed: 1200, catDuration: 1500, goldenChance: 0.15 },
+            hard: { speed: 900, catDuration: 1000, goldenChance: 0.2 }
+        };
+
+        const catTypes = [
+            { emoji: '🐈', class: 'cat-normal', points: 10, speed: 1 },
+            { emoji: '🐈‍⬛', class: 'cat-fast', points: 20, speed: 1.5 },
+            { emoji: '🦁', class: 'cat-golden', points: 50, speed: 1 }
+        ];
+
+        function initGameBoard() {
+            const board = document.getElementById('gameBoard');
+            board.innerHTML = '';
+            
+            for (let i = 0; i < 12; i++) {
+                const hole = document.createElement('div');
+                hole.className = 'hole';
+                hole.dataset.index = i;
+                
+                const cat = document.createElement('div');
+                cat.className = 'cat';
+                cat.innerHTML = catTypes[0].emoji;
+                cat.onclick = () => catchCat(i);
+                
+                hole.appendChild(cat);
+                board.appendChild(hole);
+            }
+        }
+
+        function setDifficulty(level) {
+            difficulty = level;
+            document.querySelectorAll('.difficulty-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            if (!gameActive) {
+                document.getElementById('message').textContent = 
+                    `Poziom: ${level === 'easy' ? 'Łatwy' : level === 'medium' ? 'Średni' : 'Trudny'}`;
+            }
+        }
+
+        function startGame() {
+            if (gameActive) return;
+            
+            gameActive = true;
+            score = 0;
+            timeLeft = 120;
+            combo = 0;
+            
+            updateDisplay();
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('message').textContent = 'Łap koty! 🐱';
+            
+            // Start timera
+            gameTimer = setInterval(() => {
+                timeLeft--;
+                document.getElementById('time').textContent = timeLeft;
+                
+                if (timeLeft <= 0) {
+                    endGame();
+                }
+            }, 1000);
+            
+            // Start generowania kotów
+            generateCat();
+        }
+
+        function generateCat() {
+            if (!gameActive) return;
+            
+            const holes = document.querySelectorAll('.hole');
+            const randomHole = Math.floor(Math.random() * holes.length);
+            const hole = holes[randomHole];
+            const cat = hole.querySelector('.cat');
+            
+            // Sprawdź czy w tej dziurze nie ma już kota
+            if (cat.classList.contains('show')) {
+                generateCat();
+                return;
+            }
+            
+            // Wybierz typ kota
+            let catType;
+            const rand = Math.random();
+            if (rand < difficulties[difficulty].goldenChance) {
+                catType = catTypes[2]; // Złoty kot
+            } else if (rand < 0.4) {
+                catType = catTypes[1]; // Szybki kot
+            } else {
+                catType = catTypes[0]; // Normalny kot
+            }
+            
+            cat.innerHTML = catType.emoji;
+            cat.className = `cat ${catType.class}`;
+            cat.dataset.points = catType.points;
+            
+            // Pokaż kota
+            cat.classList.add('show');
+            
+            // Ukryj kota po czasie
+            const hideTime = difficulties[difficulty].catDuration / catType.speed;
+            setTimeout(() => {
+                if (cat.classList.contains('show')) {
+                    cat.classList.remove('show');
+                    combo = 0; // Resetuj kombo jeśli kot uciekł
+                    updateDisplay();
+                }
+            }, hideTime);
+            
+            // Zaplanuj następnego kota
+            const nextCatTime = difficulties[difficulty].speed / catType.speed;
+            catTimer = setTimeout(generateCat, nextCatTime + Math.random() * 500);
+        }
+
+        function catchCat(holeIndex) {
+            if (!gameActive) return;
+            
+            const hole = document.querySelectorAll('.hole')[holeIndex];
+            const cat = hole.querySelector('.cat');
+            
+            if (!cat.classList.contains('show')) return;
+            
+            // Dodaj punkty
+            const points = parseInt(cat.dataset.points);
+            score += points * (1 + combo * 0.1); // Bonus za kombo
+            combo++;
+            
+            // Efekt wizualny
+            cat.classList.add('hit');
+            cat.classList.remove('show');
+            
+            // Pokaż kombo
+            if (combo > 1 && combo % 5 === 0) {
+                showCombo(combo);
+            }
+            
+            // Stwórz cząsteczki
+            createParticles(hole, points);
+            
+            // Resetuj kota
+            setTimeout(() => {
+                cat.classList.remove('hit');
+            }, 500);
+            
+            updateDisplay();
+        }
+
+        function showCombo(comboCount) {
+            const indicator = document.getElementById('comboIndicator');
+            indicator.textContent = `${comboCount}x KOMBO!`;
+            indicator.classList.add('show');
+            
+            setTimeout(() => {
+                indicator.classList.remove('show');
+            }, 1000);
+        }
+
+        function createParticles(hole, points) {
+            const rect = hole.getBoundingClientRect();
+            
+            for (let i = 0; i < 5; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.textContent = `+${Math.round(points)}`;
+                particle.style.left = rect.left + rect.width / 2 + 'px';
+                particle.style.top = rect.top + rect.height / 2 + 'px';
+                particle.style.setProperty('--x', (Math.random() - 0.5) * 100 + 'px');
+                particle.style.setProperty('--y', -Math.random() * 100 - 50 + 'px');
+                particle.style.color = '#ff6b35';
+                particle.style.fontSize = '1.5em';
+                particle.style.fontWeight = 'bold';
+                
+                document.body.appendChild(particle);
+                
+                setTimeout(() => {
+                    particle.classList.add('show');
+                }, 10);
+                
+                setTimeout(() => {
+                    particle.remove();
+                }, 1000);
+            }
+        }
+
+        function updateDisplay() {
+            document.getElementById('score').textContent = Math.round(score);
+            document.getElementById('combo').textContent = combo;
+        }
+
+        function endGame() {
+            gameActive = false;
+            clearInterval(gameTimer);
+            clearTimeout(catTimer);
+            
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('message').textContent = 
+                `Koniec gry! Zdobyłeś ${Math.round(score)} punktów!`;
+            
+            // Ukryj wszystkie koty
+            document.querySelectorAll('.cat').forEach(cat => {
+                cat.classList.remove('show');
+            });
+            
+            // Zapisz wynik
+            saveHighScore(Math.round(score));
+            displayHighScores();
+        }
+
+        function resetGame() {
+            gameActive = false;
+            clearInterval(gameTimer);
+            clearTimeout(catTimer);
+            
+            score = 0;
+            timeLeft = 120;
+            combo = 0;
+            
+            document.getElementById('startBtn').disabled = false;
+            updateDisplay();
+            document.getElementById('time').textContent = timeLeft;
+            document.getElementById('message').textContent = 'Wybierz poziom trudności i kliknij Start Gry!';
+            
+            // Ukryj wszystkie koty
+            document.querySelectorAll('.cat').forEach(cat => {
+                cat.classList.remove('show', 'hit');
+            });
+        }
+
+        function saveHighScore(score) {
+            highScores.push(score);
+            highScores.sort((a, b) => b - a);
+            highScores = highScores.slice(0, 5); // Tylko top 5
+            localStorage.setItem('catGameHighScores', JSON.stringify(highScores));
+        }
+
+        function displayHighScores() {
+            const scoresContainer = document.getElementById('highScores');
+            
+            if (highScores.length === 0) {
+                scoresContainer.innerHTML = '<div class="score-item">Brak wyników</div>';
+                return;
+            }
+            
+            scoresContainer.innerHTML = highScores
+                .map((score, index) => 
+                    `<div class="score-item">${index + 1}. ${score} pkt</div>`
+                ).join('');
+        }
+
+        // Inicjalizacja gry
+        initGameBoard();
+        displayHighScores();
+    </script>
